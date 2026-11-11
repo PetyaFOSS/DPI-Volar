@@ -1,138 +1,197 @@
-# DPI Volar
+<div align="center">
 
-**Evasión local de Deep Packet Inspection (DPI) en Android**
+<img src="docs/brand/mark.png" width="132" alt="DPI-Volar" />
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android%208.0%2B-3DDC84?logo=android&logoColor=white)](#cómo-compilar)
-[![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7F52FF?logo=kotlin&logoColor=white)](#)
+# DPI-Volar
 
-DPI Volar es una aplicación Android que usa el framework VPN del sistema
-(`VpnService`) para interceptar y manipular tráfico a nivel de paquetes,
-con el objetivo de evadir la Inspección Profunda de Paquetes (DPI) que
-usan algunos ISPs o redes restrictivas para bloquear o limitar ciertos
-servicios. No es un proxy ni un túnel hacia un servidor externo — todo el
-procesamiento pasa por tu propio dispositivo.
+**Evasión local de Deep Packet Inspection (DPI) en Android.**
 
-[Descargar](#descargas) · [Qué hace y qué no hace](#qué-hace-y-qué-no-hace) · [Cómo compilar](#cómo-compilar)
+Sin servidores. Sin telemetría. Todo el procesamiento ocurre en tu teléfono.
+
+[![Última versión](https://img.shields.io/github/v/release/PetyaFOSS/DPI-Volar?style=for-the-badge&label=versi%C3%B3n&color=7A634C)](https://github.com/PetyaFOSS/DPI-Volar/releases)
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](#cómo-compilar)
+[![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](#)
+[![Licencia MIT](https://img.shields.io/badge/Licencia-MIT-7A634C?style=for-the-badge)](LICENSE)
+
+[![Descargar APK v2.3.0](https://img.shields.io/badge/Descargar_APK-v2.3.0-4E7A5B?style=for-the-badge&logo=android&logoColor=white)](https://github.com/PetyaFOSS/DPI-Volar/releases/download/v2.3.0/DPI-Volar-v2.3.0.apk)
+
+[Descargas](#descargas) · [Cómo funciona](#cómo-funciona) · [Capturas](#capturas) · [Compilar](#cómo-compilar) · [Changelog](CHANGELOG.md)
+
+</div>
 
 ---
 
 ## Descargas
 
-| Versión | APK | Cambios |
-|---|---|---|
-| **v2.2.0** (actual) | [Descargar APK](https://www.mediafire.com/file/kjncklrp2l5je56/DPI_volar.apk/file) | [Ver detalle](CHANGELOG.md#220---2026-09-16) |
-| v2.1.0 | [Descargar APK](https://www.mediafire.com/file/2klrkbe8ulmkhar/app-debug.apk/file) | [Ver detalle](CHANGELOG.md#210---2026-08-27) |
-| v2.0.0 | [Descargar APK](https://www.mediafire.com/file/43jraftynsfnd4a/DPI-VOLARv2.apk/file) | [Ver detalle](CHANGELOG.md#200---2026-07-27) |
-| v1.0.0 | [Descargar APK](https://www.mediafire.com/file/w9bmv0ilbtb9a43/DPI-VOLAR.apk/file) | — |
+| Versión | Estado | APK | Cambios |
+|:---:|:---:|:---:|---|
+| **2.3.0** | Actual | [Descargar](https://github.com/PetyaFOSS/DPI-Volar/releases/download/v2.3.0/DPI-Volar-v2.3.0.apk) | Estado real del servicio, FIN/RST, notificación con acción de parada y rediseño visual. |
+| 2.2.0 | Anterior | [Descargar](https://www.mediafire.com/file/kjncklrp2l5je56/DPI_volar.apk/file) | Timeout de sesiones TCP e icono adaptativo. |
+| 2.1.0 | Anterior | [Descargar](https://www.mediafire.com/file/2klrkbe8ulmkhar/app-debug.apk/file) | Mejoras de rendimiento, pool de hilos y escrituras a la TUN. |
+| 2.0.0 | Anterior | [Descargar](https://www.mediafire.com/file/43jraftynsfnd4a/DPI-VOLARv2.apk/file) | Fragmentación TLS/SNI, rotación de técnicas y cache DNS. |
+| 1.0.0 | Anterior | [Descargar](https://www.mediafire.com/file/w9bmv0ilbtb9a43/DPI-VOLAR.apk/file) | Primera versión funcional. |
 
-El historial completo, con el porqué de cada cambio, está en [CHANGELOG.md](CHANGELOG.md).
-
-La v2.2.0 corrige un fallo de estabilidad que podía hacer que la app
-dejara de funcionar tras un tiempo de uso: las sesiones TCP podían
-quedarse bloqueadas indefinidamente, agotando hilos y descriptores de
-archivo. También incorpora el icono adaptativo completo, con foreground
-redimensionado para respetar la zona segura del launcher, fondo beige y
-recursos legacy regenerados para las cinco densidades.
+> Requiere Android 8.0 o superior. El historial completo está en [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## Qué hace y qué no hace
+## ¿Qué es DPI-Volar?
 
-Vale la pena ser claro con esto, porque "VPN" suele asociarse con
-anonimizar tráfico o cambiar de ubicación, y DPI Volar no hace eso.
+DPI-Volar usa el framework `VpnService` de Android para interceptar el tráfico
+a nivel de paquetes y manipularlo localmente. No es un proxy ni un túnel hacia
+un servidor externo: no envía tu tráfico a ninguna parte y no incluye backend,
+cuentas ni telemetría.
 
-Tu tráfico no sale a un servidor externo. A diferencia de una VPN
-comercial, DPI Volar no enruta tu conexión a través de un servidor
-remoto: todo el procesamiento ocurre en tu propio teléfono, usando la
-interfaz TUN que expone Android. Tampoco oculta tu IP ni cambia tu
-ubicación aparente — tu ISP sigue viendo que te conectas desde tu IP
-real. Lo que cambia es cómo se ve tu tráfico a nivel de paquete, para
-que a un sistema de DPI le cueste más identificarlo y bloquearlo.
+Su objetivo es concreto: **dificultar que un sistema de DPI identifique y
+bloquee conexiones TLS**. Detecta el `ClientHello`, localiza el campo SNI y
+fragmenta el handshake con las técnicas `SPLIT` y `DISORDER`, rotando
+automáticamente si una técnica deja de funcionar.
 
-No hay recolección ni envío de datos a terceros. No existe un backend,
-servidor propio, ni telemetría — todo el código que procesa tus
-paquetes está en este repositorio, se puede leer línea por línea.
+| | VPN comercial | DPI-Volar |
+|---|:---:|:---:|
+| Servidor externo | <img src="docs/icons/check.svg" width="18" height="18" alt="Sí" /> | <img src="docs/icons/cross.svg" width="18" height="18" alt="No" /> |
+| Oculta tu IP | <img src="docs/icons/check.svg" width="18" height="18" alt="Sí" /> | <img src="docs/icons/cross.svg" width="18" height="18" alt="No" /> |
+| Cambia tu ubicación | <img src="docs/icons/check.svg" width="18" height="18" alt="Sí" /> | <img src="docs/icons/cross.svg" width="18" height="18" alt="No" /> |
+| Procesa el tráfico en tu teléfono | <img src="docs/icons/cross.svg" width="18" height="18" alt="No" /> | <img src="docs/icons/check.svg" width="18" height="18" alt="Sí" /> |
+| Telemetría o backend | A veces | <img src="docs/icons/cross.svg" width="18" height="18" alt="No" /> |
+| Coste | Suscripción | Gratis |
 
-Android la trata como "VPN" a nivel de sistema porque técnicamente usa
-`VpnService` (por eso aparece el ícono de llave en la barra de estado),
-pero eso es solo el mecanismo que da acceso a interceptar paquetes, no
-implica un túnel hacia ningún servidor externo.
-
-Es una herramienta de manipulación de paquetes local para
-evadir DPI, no una VPN de anonimato. Ocultar IP o ubicación no está
-implementado todavía.
+> Tu ISP sigue viendo tu IP real. Lo que cambia es cómo se ve el handshake TLS
+> a nivel de paquete, no tu ubicación ni tu identidad.
 
 ---
 
 ## Características
 
-- Servicio VPN basado en `VpnService` con interfaz TUN
-- Detección y fragmentación del handshake TLS (`ClientHello`), con corte
-  consciente del campo SNI
-- Rotación automática de técnica de evasión (SPLIT / DISORDER) ante
-  fallos consecutivos
-- Cache de resoluciones DNS para acelerar la carga de páginas
-- Interfaz en Jetpack Compose con paleta de colores personalizada
-- Control simple de activar/desactivar protección desde la pantalla principal
-- Procesamiento 100% local del tráfico
-
-<p align="center">
-  <img src="https://github.com/YaMeAsesore/DPI-Volar/blob/02122570b02902f5d06257c3566a6b089ef110d7/Screenshot_20260716_213310.png?raw=true" width="180"/>
-  <img src="https://github.com/YaMeAsesore/DPI-Volar/blob/02122570b02902f5d06257c3566a6b089ef110d7/Screenshot_20260716_213409.png?raw=true" width="180"/>
-  <img src="https://github.com/YaMeAsesore/DPI-Volar/blob/02122570b02902f5d06257c3566a6b089ef110d7/Screenshot_20260716_213529.png?raw=true" width="180"/>
-  <img src="https://github.com/YaMeAsesore/DPI-Volar/blob/02122570b02902f5d06257c3566a6b089ef110d7/Screenshot_20260716_213517.png?raw=true" width="180"/>
-</p>
+| | Característica | Detalle |
+|:---:|---|---|
+| <img src="docs/icons/shield.svg" width="22" height="22" alt="" /> | **Fragmentación TLS/SNI** | Detecta el `ClientHello` y corta el handshake dentro del nombre del dominio. |
+| <img src="docs/icons/scissors.svg" width="22" height="22" alt="" /> | **SPLIT / DISORDER** | Dos técnicas de fragmentación para romper la firma que busca el DPI. |
+| <img src="docs/icons/refresh.svg" width="22" height="22" alt="" /> | **Rotación automática** | Cambia de técnica cuando detecta fallos consecutivos contra un destino. |
+| <img src="docs/icons/server.svg" width="22" height="22" alt="" /> | **Cache DNS** | Evita resolver el mismo dominio una y otra vez al cargar una página. |
+| <img src="docs/icons/lock.svg" width="22" height="22" alt="" /> | **Procesamiento local** | Sin servidores, sin cuentas y sin telemetría. |
+| <img src="docs/icons/palette.svg" width="22" height="22" alt="" /> | **Material 3** | Tema claro/oscuro, tarjeta de estado, animaciones y diseño adaptable. |
 
 ---
 
-## Cómo compilar
+## Cómo funciona
 
-Requisitos: Android Studio reciente (Hedgehog o superior), JDK 17. Kotlin
-lo maneja Gradle solo, no hace falta instalarlo aparte. Las versiones
-exactas de SDK mínimo/objetivo están en `build.gradle.kts`.
-
-```bash
-git clone https://github.com/YaMeAsesore/DPI-Volar.git
+```mermaid
+flowchart LR
+    A["Apps del teléfono"] --> B["Interfaz TUN<br/>VpnService"]
+    B --> C{"DPI-Volar"}
+    C -->|"TCP"| D["Proxy TCP local"]
+    C -->|"UDP 53"| E["Cache DNS"]
+    D --> F["Detección ClientHello<br/>y SNI"]
+    F --> G["SPLIT / DISORDER"]
+    G --> H["Internet"]
+    E --> H
 ```
 
-Ábrelo en Android Studio (`Open` → selecciona la carpeta del proyecto),
-espera a que Gradle sincronice, conecta un dispositivo o emulador con
-Android 8.0 (API 26) o superior, y ejecútalo con el botón Run.
+1. `VpnService` crea una interfaz TUN y recibe los paquetes IPv4 del dispositivo.
+2. Cada conexión TCP se reenvía a través de un socket local protegido con `protect()`.
+3. En el primer bloque TLS se detecta el `ClientHello` y se localiza el SNI.
+4. El handshake se fragmenta (o se envía fuera de orden) para que el DPI no
+   encuentre el nombre del dominio en un solo paquete.
+5. Las respuestas del servidor vuelven al cliente por la TUN, segmentadas para
+   no superar el MTU.
+
+Las consultas DNS por UDP se responden desde una cache local o se reenvían por
+un socket protegido. El resto del tráfico UDP todavía no se reenvía.
+
+---
+
+## Capturas
+
+| Protección inactiva | Protección activa |
+|:---:|:---:|
+| <img src="docs/screenshots/home-inactive.png" width="260" alt="DPI-Volar inactivo" /> | <img src="docs/screenshots/home-active.png" width="260" alt="DPI-Volar activo" /> |
+| **Menú lateral** | **Modo oscuro** |
+| <img src="docs/screenshots/drawer.png" width="260" alt="Menú lateral" /> | <img src="docs/screenshots/home-dark.png" width="260" alt="DPI-Volar en modo oscuro" /> |
 
 ---
 
 ## Estado del proyecto
 
-La v2 trae la lógica funcional de evasión de DPI: detección y
-fragmentación del ClientHello, corte consciente del SNI, rotación
-automática de técnica y cache de DNS. La v2.1.0 optimizó el pool de
-hilos, las escrituras hacia la TUN, los ACK y el cálculo de campos de
-paquetes. La v2.2.0 añade un timeout de lectura y cierre limpio para
-sesiones TCP inactivas, además de reemplazar sesiones antiguas cuando
-llega un SYN nuevo con la misma clave. También actualiza el icono
-adaptativo y elimina recursos de imagen que no son válidos como recursos
-Android por sus nombres con mayúsculas. El detalle completo está en el
-[CHANGELOG](CHANGELOG.md).
+- [x] Servicio VPN con interfaz TUN y procesamiento local
+- [x] Detección de `ClientHello` y corte consciente del SNI
+- [x] Técnicas `SPLIT` y `DISORDER` con rotación automática
+- [x] Cache de DNS
+- [x] Estado real del servicio observable desde la UI
+- [x] Manejo correcto de FIN/RST y cierre de sesiones inactivas
+- [x] Notificación con acción para detener la protección
+- [x] Rediseño visual con Material 3 y modo oscuro
+- [ ] Reenvío UDP general (QUIC/HTTP3, NTP, etc.)
+- [ ] Soporte IPv6
+- [ ] Stack TCP con ventana, retransmisiones y paquetes fuera de orden
+- [ ] Validación de batería y temperatura en dispositivo físico
 
-Sigue pendiente validar el consumo de batería y la temperatura en
-dispositivo físico bajo uso prolongado (lo probado hasta ahora fue
-principalmente en emulador), y revisar por qué el parser de SNI a veces
-no encuentra el hostname dentro del ClientHello y cae a un corte de
-posición fija — no afecta la velocidad, pero sí reduce qué tan bien
-funciona la fragmentación contra DPI real.
+La v2.3.0 se probó en un emulador Android 15 (API 35): activación desde cero,
+permiso VPN, navegación HTTP, descarga de 1 MB, parada desde la app y desde la
+notificación, y reactivación. Las pruebas unitarias cubren checksums, paquetes
+IPv4/TCP/UDP, parser de SNI y cache DNS.
 
-Las siguientes fases se enfocan en eso: robustecer las técnicas de
-evasión y probarlas contra sistemas de DPI reales, no solo contra
-capturas de tráfico normal.
+---
+
+## Cómo compilar
+
+Requisitos:
+
+- Android Studio reciente
+- JDK 17 o superior
+- SDK de Android 36.1 (el proyecto lo declara en `app/build.gradle.kts`)
+
+```bash
+git clone https://github.com/PetyaFOSS/DPI-Volar.git
+cd DPI-Volar
+```
+
+Compila el APK de depuración:
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+Ejecuta las pruebas:
+
+```bash
+./gradlew :app:testDebugUnitTest
+```
+
+El APK queda en `app/build/outputs/apk/debug/app-debug.apk`. También puedes abrir
+el proyecto en Android Studio, esperar la sincronización de Gradle y usar el
+botón **Run** con un dispositivo o emulador Android 8.0+.
+
+---
+
+## Estructura
+
+```text
+app/src/main/java/com/example/dpi_volar/
+├── MyVpnService.kt      # Servicio VPN, TUN y ciclo de vida
+├── TcpSession.kt        # Proxy TCP y técnicas de evasión
+├── TlsParser.kt         # Detección del SNI en el ClientHello
+├── Packet.kt            # Parseo IPv4 / TCP / UDP
+├── PacketBuilder.kt     # Construcción de paquetes y checksums
+├── TunWriter.kt         # Escritura serializada a la TUN
+├── DnsCache.kt          # Cache de respuestas DNS
+├── VpnState.kt          # Estado observable del servicio
+└── ui/theme/            # Tema Material 3 claro/oscuro
+```
 
 ---
 
 ## Contribuir
 
-El proyecto es de código abierto. Puedes hacer fork y modificarlo
-libremente para tu propio uso.
+El proyecto es de código abierto. Puedes hacer fork, abrir issues o enviar pull
+requests. Si vas a cambiar la lógica de red, incluye una prueba o una captura de
+tráfico que explique el cambio.
 
 ## Licencia
 
-MIT — el detalle está en [LICENSE](LICENSE).
+MIT — el detalle está en [LICENSE](LICENSE). Los iconos SVG del README están
+basados en [Lucide](https://lucide.dev) (ISC).
+
+<div align="center">
+  <sub>Hecho para evadir DPI, no para anonimato. Tu IP sigue siendo visible para tu ISP.</sub>
+</div>

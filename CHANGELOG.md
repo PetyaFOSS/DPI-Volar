@@ -1,5 +1,86 @@
 # Changelog
 
+## [2.3.0] - 2026-11-11
+
+Corrección del fallo que hacía que la pantalla siguiera mostrando
+"Protección DPI inactiva" aunque la VPN sí estuviera funcionando, más
+robustez en el ciclo de vida del servicio y en el manejo de conexiones
+TCP.
+
+### Corregido
+
+- **La UI no reflejaba el estado real del servicio.** `MainActivity`
+  guardaba un estado propio y lo marcaba como activo de forma optimista;
+  después `onResume()` lo sobrescribía con `MyVpnService.isRunning`
+  antes de que el servicio terminara de establecer la interfaz TUN. El
+  resultado era que la pantalla volvía a "inactiva" y el botón quedaba
+  desincronizado. Ahora el servicio publica su estado real mediante un
+  `StateFlow<VpnState>` (`Stopped`, `Starting`, `Running`, `Error`) y la
+  actividad se suscribe a él. Nunca más se muestra un estado inventado.
+- **FIN del cliente cerraba toda la sesión.** Si el cliente terminaba de
+  enviar (FIN) antes de que terminara el `connect()` al servidor real, la
+  sesión se cerraba y la petición se perdía. Ahora el FIN solo cierra la
+  mitad de escritura (`shutdownOutput`), se conserva la lectura de la
+  respuesta del servidor y se envía FIN al cliente cuando corresponde.
+  Un RST sí aborta la sesión, como debe ser.
+- **`stopService()` no detenía la VPN.** Al estar enlazado por el
+  sistema, el `VpnService` no se destruía solo con `stopService()`. Ahora
+  se envía la acción `ACTION_STOP`, que cierra la interfaz TUN y luego
+  retira el servicio.
+- **Arranque en primer plano incorrecto.** Se usaba `startService()`
+  para un servicio en primer plano. Ahora se usa
+  `ContextCompat.startForegroundService()` y, en Android 14+, se declara
+  explícitamente el tipo `FOREGROUND_SERVICE_TYPE_SPECIAL_USE`.
+- **Fallo silencioso al crear la VPN.** Si `establish()` devolvía `null`
+  o lanzaba una excepción, el servicio quedaba en primer plano sin hacer
+  nada y la UI no mostraba ningún error. Ahora se publica un
+  `VpnState.Error` con un mensaje comprensible y el servicio se detiene
+  limpiamente.
+- **Icono de notificación inválido.** Se usaba el icono adaptativo del
+  launcher como icono pequeño de notificación. Se añadió
+  `ic_stat_dpi_volar.xml`, un vector monocromo válido.
+- **Paquetes malformados o truncados.** `IPv4Packet`, `TcpSegment` y
+  `UdpSegment` ahora validan longitudes, versión, IHL y offsets antes de
+  leer, en lugar de arriesgar `ArrayIndexOutOfBoundsException`.
+- **Cierre inesperado del túnel.** Si el bucle de lectura de la TUN
+  termina por un error, el servicio ya no se queda "activo" en la UI:
+  se detiene y muestra el motivo.
+
+### Añadido
+
+- Acción **"Detener"** en la notificación, para apagar la protección sin
+  abrir la app.
+- `onRevoke()`: si el sistema revoca el permiso de VPN, se cierra el
+  túnel y se informa en la pantalla.
+- Segmentación de los datos del servidor en paquetes de como máximo
+  1400 bytes de carga TCP, para no superar el MTU de 1500 de la TUN.
+- Pruebas unitarias de checksums, construcción y parseo de paquetes IPv4
+  TCP/UDP, parser de SNI y cache DNS (13 pruebas, todas en verde).
+- Mensaje de estado "Iniciando…" con indicador de progreso mientras se
+  crea la interfaz.
+
+### Interfaz
+
+- Rediseño completo de la pantalla principal con Material 3: tema claro
+  y oscuro, tarjeta de estado con animación de pulso, botón principal con
+  icono, tarjetas informativas y menú lateral renovado.
+- Nuevas capturas en `docs/screenshots/` y README rediseñado, con la
+  descarga de la v2.3.0 destacada.
+- El README usa ahora el logo real de la app (`docs/brand/mark.png`),
+  iconos SVG en lugar de emojis y una presentación más limpia.
+- Se reemplazó el `ic_launcher-playstore.png` de relleno por el icono
+  real y se dio permiso de ejecución a `gradlew`.
+- Se eliminaron los archivos de tema duplicados que quedaban en la raíz
+  del paquete; el tema vive únicamente en `ui/theme`.
+
+### Notas de verificación
+
+- `:app:testDebugUnitTest` y `:app:assembleDebug` completan correctamente.
+- Probado en emulador Android 15 (API 35): activación desde cero con el
+  diálogo de permiso VPN, estado correcto en pantalla, navegación HTTP,
+  descarga de 1 MB a través del túnel, cierre desde el botón y
+  reactivación sin volver a pedir permiso.
+
 ## [2.2.0] - 2026-09-16
 
 Corrección de estabilidad para sesiones TCP y actualización completa del
